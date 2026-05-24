@@ -15,6 +15,11 @@ export DB_NAME="VigilantLedgerDB"
 export DB_USER="sa"
 export DB_PASSWORD="YourSecure_Password123!"
 export ACCEPT_EULA="Y"
+export MSSQL_SA_PASSWORD="YourSecure_Password123!"
+
+# Configure SQL Server system configuration
+echo "[*] Configuring MS SQL Server credentials..."
+/opt/mssql/bin/mssql-conf -n setup
 
 # 1. Start SQL Server 2022 in the background
 echo "[*] Launching MS SQL Server 2022 process..."
