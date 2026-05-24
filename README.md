@@ -1,3 +1,12 @@
+---
+title: VigilantLedger
+emoji: 👁
+colorFrom: red
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # VigilantLedger: Cryptographically Verifiable Database Ledger & SecOps Engine
 
 VigilantLedger is a security-focused, industrial-grade SQL and Python project that addresses a major enterprise database challenge: **preventing, detecting, and auditing privilege abuse and unauthorized data access in sensitive systems (e.g., Banking, Healthcare, Government).**
