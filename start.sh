@@ -14,6 +14,7 @@ export DB_PORT="1433"
 export DB_NAME="VigilantLedgerDB"
 export DB_USER="sa"
 export DB_PASSWORD="YourSecure_Password123!"
+export ACCEPT_EULA="Y"
 
 # 1. Start SQL Server 2022 in the background
 echo "[*] Launching MS SQL Server 2022 process..."
