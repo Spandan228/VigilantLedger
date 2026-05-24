@@ -20,9 +20,9 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Add Microsoft repository keys for SQL Server 2022
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-archive-keyring.gpg
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/ubuntu/22.04/mssql-server-2022 jammy main" | tee /etc/apt/sources.list.d/mssql-server-2022.list
+# Add Microsoft repository keys globally
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg
+RUN echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/mssql-server-2022 jammy main" | tee /etc/apt/sources.list.d/mssql-server-2022.list
 
 # Install Microsoft SQL Server 2022
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y mssql-server
