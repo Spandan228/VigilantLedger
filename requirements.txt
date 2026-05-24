@@ -1,0 +1,13 @@
+# ============================================================================
+# PROJECT: VigilantLedger
+# FILE: requirements.txt
+# DESCRIPTION: Python libraries and dependencies
+# ============================================================================
+
+pyodbc>=5.2.0
+streamlit>=1.45.1
+pandas>=2.2.3
+plotly>=5.24.1
+python-dotenv>=1.1.0
+fastapi>=0.110.0
+uvicorn>=0.28.0

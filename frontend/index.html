@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VigilantLedger SecOps Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Plotly JS CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- 1. SIDEBAR BRANDING & CONFIGURATION -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-box">
+                    <h2>🛡️ SECURE SHIELD</h2>
+                    <span class="version-label">VIGILANTLEDGER v1.2</span>
+                </div>
+                <button id="sidebar-toggle" class="sidebar-toggle-btn" onclick="toggleSidebar()">◀</button>
+            </div>
+            
+            <hr class="sidebar-divider divider">
+            
+            <!-- Live Plotly Gauge -->
+            <div class="gauge-container sidebar-item">
+                <div id="integrity-gauge"></div>
+            </div>
+            
+            <hr class="sidebar-divider divider">
+            
+            <div class="config-panel sidebar-item">
+                <h3>Database Config</h3>
+                <ul class="config-list">
+                    <li><span>🔌 Host:</span> <code>localhost:1433</code></li>
+                    <li><span>🛢️ Target:</span> <code>VigilantLedgerDB</code></li>
+                    <li><span>🔐 Engine:</span> <code>SQL Server 2022</code></li>
+                    <li><span>🛡️ RLS Status:</span> <span class="badge-active">ACTIVE</span></li>
+                    <li><span>📉 Status:</span> <span id="db-state-badge" class="state-label">VERIFYING...</span></li>
+                </ul>
+            </div>
+            
+            <hr class="sidebar-divider divider">
+            
+            <div class="digest-cache-panel sidebar-item">
+                <h3>Exported Digest</h3>
+                <div id="sidebar-digest" class="digest-mini-box">
+                    Awaiting digest sync...
+                </div>
+            </div>
+            
+            <hr class="sidebar-divider divider">
+            
+            <button id="sync-btn" class="sync-action-btn sidebar-item">🔄 Sync Metadata Feed</button>
+        </aside>
+
+        <!-- 2. MAIN VIEWPORT -->
+        <main class="main-viewport">
+            <!-- Header Banner -->
+            <header class="console-header">
+                <h1>🛡️ VigilantLedger Operations Console</h1>
+                <span class="sub-label">CRYPTOGRAPHIC LEDGER & DYNAMIC SECURITY AGENT</span>
+            </header>
+
+            <!-- Top KPI Cards Row -->
+            <section class="kpi-grid">
+                <div class="kpi-card" id="kpi-block-height">
+                    <span class="kpi-title">VERIFIED BLOCK HEIGHT</span>
+                    <h2 class="kpi-value">#0</h2>
+                    <span class="neon-badge-blue">Gen-0 Chain Ready</span>
+                </div>
+                <div class="kpi-card" id="kpi-ledger-actions">
+                    <span class="kpi-title">TOTAL LEDGER ACTIONS</span>
+                    <h2 class="kpi-value">0</h2>
+                    <span class="neon-badge-blue">Audit Trails Synced</span>
+                </div>
+                <div class="kpi-card" id="kpi-integrity">
+                    <span class="kpi-title">CHAIN INTEGRITY STATUS</span>
+                    <h2 class="kpi-value">VERIFYING</h2>
+                    <span id="integrity-status-badge">...</span>
+                </div>
+                <div class="kpi-card" id="kpi-active-threats">
+                    <span class="kpi-title">ACTIVE SENTINEL THREATS</span>
+                    <h2 class="kpi-value">0</h2>
+                    <span id="active-threats-badge">...</span>
+                </div>
+            </section>
+
+            <!-- Navigation Tabs Bar -->
+            <nav class="tabs-navigation">
+                <button class="tab-link active" onclick="switchTab(event, 'tab-ledger')">⛓️ Cryptographic Ledger</button>
+                <button class="tab-link" onclick="switchTab(event, 'tab-security')">🕵️ Role Simulation</button>
+                <button class="tab-link" onclick="switchTab(event, 'tab-chrono')">🕰️ Forensic Time Travel</button>
+                <button class="tab-link" onclick="switchTab(event, 'tab-threat')">☣️ Cyber Threat Sandbox</button>
+                <button class="tab-link" onclick="switchTab(event, 'tab-sentinel')">🔔 Sentinel Incident Center</button>
+            </nav>
+
+            <!-- 3. TAB PANE CONTAINERS -->
+            <!-- TAB 1: CRYPTOGRAPHIC LEDGER -->
+            <div id="tab-ledger" class="tab-content active">
+                <div class="tab-header">
+                    <h2>Database Blockchain Verification & Chain Map</h2>
+                </div>
+                <div class="layout-split">
+                    <div class="cyber-card col-left">
+                        <h3>Ledger Security Auditor</h3>
+                        
+                        <!-- Collapsible explanation -->
+                        <details class="cyber-details" open>
+                            <summary>ℹ️ SYSTEM GUIDE: LEDGER VERIFICATION</summary>
+                            <p class="description">Verifies database rows against a saved secure digest block hash using SHA-256 Merkle trees.</p>
+                        </details>
+                        
+                        <div class="digest-view-container">
+                            <h4>Active Reference Digest:</h4>
+                            <pre id="tab-ledger-digest" class="json-code">Loading digest...</pre>
+                        </div>
+                        <button id="run-audit-btn" class="action-btn-primary margin-top-15">🚀 EXECUTE BLOCKCHAIN AUDIT</button>
+                        <div id="audit-result-alert" class="audit-alert"></div>
+                    </div>
+                    
+                    <div class="cyber-card col-right">
+                        <h3>Ledger Blockchain Growth Graph</h3>
+                        <div id="blockchain-chart" class="chart-canvas"></div>
+                    </div>
+                </div>
+
+                <div class="full-width-section margin-top-20">
+                    <div class="split-header-row">
+                        <h3>⛓️ Database Ledger Block Map (Active Sequence)</h3>
+                        <div class="pager-controls">
+                            <button id="block-prev-btn" class="pager-btn" onclick="prevBlockPage()">◀ Prev</button>
+                            <span id="block-pager-info">Page 1</span>
+                            <button id="block-next-btn" class="pager-btn" onclick="nextBlockPage()">Next ▶</button>
+                        </div>
+                    </div>
+                    <div id="blockchain-map-row" class="blockchain-map-row">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <div class="full-width-section margin-top-20">
+                    <div class="split-header-row">
+                        <h3>📋 Transactions Metadata Audit Grid</h3>
+                        <input type="text" id="tx-search-input" class="form-control table-search-input" placeholder="Search transactions..." oninput="filterTransactionsTable()">
+                    </div>
+                    <div class="table-container">
+                        <table id="transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Block ID</th>
+                                    <th>Ordinal</th>
+                                    <th>Commit Time (UTC)</th>
+                                    <th>Database User</th>
+                                    <th>Hash Certificate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" class="placeholder">Awaiting database sync...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: ROLE SIMULATION -->
+            <div id="tab-security" class="tab-content">
+                <div class="tab-header">
+                    <h2>Dynamic Row-Level Filter & Column-Masking Simulation</h2>
+                </div>
+                <div class="layout-split">
+                    <div class="cyber-card col-left">
+                        <h3>Impersonation Gateway</h3>
+                        <div class="form-group">
+                            <label for="persona-select">Select Security Persona:</label>
+                            <select id="persona-select" class="form-select" onchange="loadPersonaProfile()">
+                                <option value="auditor">Carol - Compliance Auditor</option>
+                                <option value="manager">Bob - Financial Manager</option>
+                                <option value="accountant-east">Alice - Staff Accountant (East Region)</option>
+                                <option value="accountant-west">Dave - Staff Accountant (West Region)</option>
+                                <option value="admin">Administrator (Full DB Override)</option>
+                            </select>
+                        </div>
+
+                        <div id="persona-profile" class="persona-profile-box">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <button id="send-query-btn" class="action-btn-primary margin-top-20">🔥 SEND SECURE QUERY TO DATABASE</button>
+                    </div>
+
+                    <div class="cyber-card col-right">
+                        <h3>Gateway Execution Terminal Output</h3>
+                        <div id="impersonation-console" class="cyber-console">
+                            [System Config] Awaiting persona query trigger...
+                        </div>
+                        
+                        <h3 class="margin-top-20">Query Results: <code>SELECT * FROM Core.Accounts;</code></h3>
+                        <div class="table-container">
+                            <table id="persona-results-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>SSN</th>
+                                        <th>Email</th>
+                                        <th>Region</th>
+                                        <th>Balance</th>
+                                        <th>Updated By</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="8" class="placeholder">Select a persona and run query to view results...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="full-width-section margin-top-20">
+                    <details class="cyber-details">
+                        <summary>ℹ️ SYSTEM SECURITY RULE SPECIFICATIONS (RLS / CLS PREDICATES)</summary>
+                        <div class="sql-code">
+                            CREATE FUNCTION Core.fn_securitypredicate(@Region AS VARCHAR(20))<br/>
+                            RETURNS TABLE WITH SCHEMABINDING AS<br/>
+                            RETURN SELECT 1 WHERE<br/>
+                            &nbsp;&nbsp;SESSION_CONTEXT(N'AppRole') IS NULL<br/>
+                            &nbsp;&nbsp;OR SESSION_CONTEXT(N'AppRole') IN ('ComplianceAuditor', 'FinancialManager')<br/>
+                            &nbsp;&nbsp;OR (SESSION_CONTEXT(N'AppRole') = 'StaffAccountant' AND @Region = SESSION_CONTEXT(N'AppRegion'));<br/>
+                            GO<br/><br/>
+                            -- SSN Dynamic Data Masking definition:<br/>
+                            ALTER TABLE Core.Accounts ALTER COLUMN SSN ADD MASKED WITH (FUNCTION = 'partial(0, "XXX-XX-", 4)');
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- TAB 3: FORENSIC TIME TRAVEL -->
+            <div id="tab-chrono" class="tab-content">
+                <div class="tab-header">
+                    <h2>Chrono-Forensic Audit Reconstruct Layer</h2>
+                </div>
+                <div class="layout-split">
+                    <div class="cyber-card col-left">
+                        <h3>SYSTEM_TIME Time-Travel Query</h3>
+                        <div class="form-group">
+                            <label for="chrono-slider">Historical Time Coordinate (Minutes Ago): <span id="chrono-slider-val" class="text-cyan">15</span></label>
+                            <input type="range" id="chrono-slider" min="1" max="60" value="15" class="slider" oninput="updateChronoSlider(this.value)">
+                        </div>
+                        <div class="time-coordinate-box">
+                            💾 <strong>UTC Query Coordinate:</strong> <code id="chrono-timestamp">...</code>
+                        </div>
+                        <button id="run-chrono-btn" class="action-btn-primary margin-top-20">⏳ EXECUTE CHRONO-REPLAY QUERY</button>
+                        
+                        <h4 class="margin-top-20">Temporal Results</h4>
+                        <div class="table-container">
+                            <table id="chrono-results-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Region</th>
+                                        <th>Balance</th>
+                                        <th>Updated By</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="6" class="placeholder">Awaiting query trigger...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="cyber-card col-right">
+                        <h3>Balance Audit Trails</h3>
+                        <div id="temporal-chart" class="chart-canvas"></div>
+                        
+                        <details class="cyber-details margin-top-15">
+                            <summary>ℹ️ FORENSIC AUDIT TRAILS</summary>
+                            <p class="description">Ledger records maintain cryptographic chain hashes linking modifications to exact block indexes, providing water-tight forensic evidence trails.</p>
+                        </details>
+                    </div>
+                </div>
+
+                <div class="full-width-section">
+                    <div class="split-header-row">
+                        <h3>🧬 Historical Record Modification Ledger (<code>Core.Accounts_Ledger</code>)</h3>
+                        <div class="btn-group-row">
+                            <input type="text" id="history-search-input" class="form-control table-search-input" placeholder="Filter history logs..." oninput="filterHistoryTable()">
+                            <button id="fetch-history-btn" class="action-btn-secondary" style="padding: 10px 18px;">📋 FETCH IMMUTABLE HISTORY</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container margin-top-15">
+                        <table id="history-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Region</th>
+                                    <th>Balance</th>
+                                    <th>Writer</th>
+                                    <th>Timestamp</th>
+                                    <th>Tx ID</th>
+                                    <th>Seq ID</th>
+                                    <th>Op Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="9" class="placeholder">Click load button to fetch full modification timeline...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: CYBER THREAT SANDBOX -->
+            <div id="tab-threat" class="tab-content">
+                <div class="tab-header">
+                    <h2>Intrusion Emulation & Sandbox Controls</h2>
+                </div>
+                <div class="layout-split">
+                    <!-- Vector 1 & 2 -->
+                    <div class="cyber-card col-left threat-border">
+                        <h3 class="text-red">🔥 Vector 1: Backdoor Write Bypass</h3>
+                        <p class="description">Simulates a database admin or hacker logging into MS SQL directly (bypassing the application gateway api and session context) to overwrite account balances.</p>
+                        
+                        <div class="form-group">
+                            <label for="backdoor-amount">Inject Bypass Balance Value ($):</label>
+                            <input type="number" id="backdoor-amount" class="form-control" value="999999.00">
+                        </div>
+                        <button id="inject-backdoor-btn" class="action-btn-threat">⚡ EXECUTE BACKDOOR WRITE BYPASS</button>
+                        
+                        <div id="backdoor-console" class="cyber-console margin-top-15 console-red">
+                            [System Status] Awaiting Vector execution...
+                        </div>
+
+                        <hr class="divider margin-top-20">
+
+                        <h3 class="text-orange margin-top-20">⚠️ Vector 2: Log Cleansing Attempt</h3>
+                        <p class="description">Simulates a hacker attempting to delete access logs from the database audit trail to cover their tracks.</p>
+                        <button id="delete-logs-btn" class="action-btn-warning">🗑️ EXECUTE AUDIT LOG DELETION</button>
+                        
+                        <div id="delete-logs-console" class="cyber-console margin-top-15 console-orange">
+                            [System Status] Awaiting Vector execution...
+                        </div>
+                    </div>
+
+                    <!-- Vector 3 -->
+                    <div class="cyber-card col-right">
+                        <h3>⛓️ Vector 3: Digest Forgery Audit</h3>
+                        <p class="description">Demonstrates ledger verification checks. We save a healthy digest key, and then simulate hash corruption by changing signatures.</p>
+                        
+                        <div class="btn-group-row">
+                            <button id="save-digest-btn" class="action-btn-secondary width-50">💾 SAVE BASE DIGEST</button>
+                            <button id="verify-forged-btn" class="action-btn-threat width-50">💥 VERIFY FORGED DIGEST</button>
+                        </div>
+                        
+                        <div id="digest-save-alert" class="audit-alert margin-top-15"></div>
+
+                        <div id="digest-forged-console" class="cyber-console margin-top-15 console-red">
+                            [System Status] Awaiting Vector execution...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: SENTINEL INCIDENT CENTER -->
+            <div id="tab-sentinel" class="tab-content">
+                <div class="tab-header">
+                    <h2>Security Sentinel Threat Logs & Action Panel</h2>
+                </div>
+                <div class="layout-split">
+                    <div class="cyber-card col-left">
+                        <div class="split-header-row">
+                            <h3>Security Incident Alert Registry</h3>
+                            <input type="text" id="alerts-search-input" class="form-control table-search-input" placeholder="Filter security alerts..." oninput="filterAlertsTable()">
+                        </div>
+                        <div class="table-container">
+                            <table id="alerts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Alert ID</th>
+                                        <th>Timestamp</th>
+                                        <th>Severity</th>
+                                        <th>Origin User</th>
+                                        <th>Incident Details</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="6" class="placeholder">Checking threat registry feeds...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="cyber-card col-right">
+                        <h3>Sentinel Operations Center</h3>
+                        <div id="alerts-chart" class="chart-canvas"></div>
+                        
+                        <div class="btn-group-row margin-top-20">
+                            <button id="scan-threats-btn" class="action-btn-primary width-50">🛡️ EXECUTE SEC-RULES SCAN</button>
+                            <button id="resolve-threats-btn" class="action-btn-secondary width-50">✅ RESOLVE INCIDENT QUEUE</button>
+                        </div>
+                        <div id="sentinel-action-status" class="sentinel-status-alert"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Main Client Javascript -->
+    <script src="/static/main.js"></script>
+</body>
+</html>
